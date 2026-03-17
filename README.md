@@ -1,44 +1,131 @@
 # Real-time Anomaly Detection for Liquid Argon Time Projection Chambers
+
 [![arXiv](https://img.shields.io/badge/arXiv-2512.06208-b31b1b.svg?style=flat-square)](https://arxiv.org/abs/2509.21817)
 
-1. Input Data and preprocessing: https://github.com/uboone/OpenSamples
-  Use the hdf5 files, `Inclusive, WithWire`
+## 1. Input Data & Preprocessing
 
-  Use `ubopendata` conda environment for this part
+**Source:** https://github.com/uboone/OpenSamples\
+Use the HDF5 files: `Inclusive, WithWire`\
+Use the `ubopendata` conda environment for this step.
 
-  The `wire_table` contains (Wire, Timetick, ADC) values. I used plane2, the collection plane
-  The input data is preprocessed to reduce the model size.
-  My naming scheme is AXB, where A and B are the division factors for Timetick and Wire respectively.
-  The Timetick dimension is downsampled by a factor of 10 before division
+### Data Description
 
-  ex: 10X4
-  Original input size values for single event is (Wire, Timetick) = (3456, 6400) --> (3456,640) after downsampling --> (864,64) after division
-  
-  hdf5 files are preprocessed into npy files through `01_data2npy_full.py`. Samples are inside `inputData`
+The `wire_table` contains:
 
-2. Training Teacher
-  Use `02_train_teacher.py`
-  Use `ubqkeras` conda environment for step 2 to 4
+    (Wire, Timetick, ADC)
 
-3. Training Student
-  Use `03_train_student.py`
-  Requires Teacher from step 2.
-  
-  Trained models are saved in `savedModel`
+-   Plane used: **plane2 (collection plane)**
+-   Input data is preprocessed to reduce model size
+-   Naming scheme: **AXB**
+    -   A = Timetick division factor
+    -   B = Wire division factor
+-   Timetick dimension is first downsampled by a factor of **10**, then
+    divided
 
-4. Evaluating Loss (or 'Anomaly Score')
-  Use `04_getLoss.py`
-  Evaluates loss (or Anomlay Score in our language) and saves into npy file
+### Example: `10X4`
 
-5. Dependencies
-  Use `conda_envs`
-  If one has to install the environments from scratch, the `.txt` folders have dependencies.
-  
-  `file.py`, `microboone_utils.py` are obtained from https://github.com/uboone/OpenSamples
-  `QDenseBatchnorm.py` is in this branch of qkeras https://github.com/google/qkeras/pull/74
+Original single-event input:
 
-6. Models: Taken from https://github.com/Princeton-AD/cicada/blob/main/models.py
+    (Wire, Timetick) = (3456, 6400)
 
-  Defined in `models.py`
-  
-  `teacher_reshape` and `teacher_dense`, `teacher_reshape2` values need to be changed according with the prepocessed input image size
+After downsampling:
+
+    (3456, 640)
+
+After division:
+
+    (864, 64)
+
+### Conversion to NumPy
+
+HDF5 files are converted to `.npy` using:
+
+    01_data2npy_full.py
+
+Output samples are stored in:
+
+    inputData/
+
+------------------------------------------------------------------------
+
+## 2. Train Teacher Model
+
+Script:
+
+    02_train_teacher.py
+
+Use the `ubqkeras` conda environment (Steps 2--4).
+
+------------------------------------------------------------------------
+
+## 3. Train Student Model
+
+Script:
+
+    03_train_student.py
+
+**Requirements:**
+
+-   A trained Teacher model from Step 2
+
+Output models are saved in:
+
+    savedModel/
+
+------------------------------------------------------------------------
+
+## 4. Evaluate Loss (Anomaly Score)
+
+Script:
+
+    04_getLoss.py
+
+**Function:**
+
+-   Computes loss (referred to as **Anomaly Score**)
+-   Saves results as `.npy` files
+
+------------------------------------------------------------------------
+
+## 5. Dependencies
+
+Conda environments are provided in:
+
+    conda_envs/
+
+If installing from scratch:
+
+-   Use the `.txt` files for dependency lists
+
+### External Files
+
+From OpenSamples:
+
+-   `file.py`
+-   `microboone_utils.py`\
+    https://github.com/uboone/OpenSamples
+
+From QKeras (custom branch):
+
+-   `QDenseBatchnorm.py`\
+    https://github.com/google/qkeras/pull/74
+
+------------------------------------------------------------------------
+
+## 6. Models
+
+Base implementation:
+
+https://github.com/Princeton-AD/cicada/blob/main/models.py
+
+Local definitions:
+
+    models.py
+
+### Important Configuration
+
+The following parameters must match the preprocessed input image size:
+
+-   `teacher_reshape`
+-   `teacher_dense`
+-   `teacher_reshape2`
